@@ -56,14 +56,6 @@ impl Router {
         }
     }
 
-    pub fn wrap_handler<F, R>(&self, handler: F) -> Box<dyn Fn() -> Box<dyn IntoResponse>>
-    where
-        F: Fn() -> R + 'static,
-        R: IntoResponse + 'static,
-    {
-        Box::new(move || Box::new(handler()))
-    }
-
     pub fn new_route<F, R>(&mut self, route: &str, handler: F) -> anyhow::Result<()>
     where
         F: Fn() -> R + 'static,
@@ -73,7 +65,7 @@ impl Router {
             return Err(anyhow::anyhow!("Route already exists"));
         }
         self.routes
-            .insert(route.to_string(), self.wrap_handler(handler));
+            .insert(route.to_string(), Box::new(move || Box::new(handler())));
         Ok(())
     }
 
